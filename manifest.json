@@ -1,6 +1,6 @@
 {
   "manifest_version": 3,
-  "name": "Dolphin 🐬 Copilot",
+  "name": "Dolphin 🐬 Dock",
   "version": "1.0",
   "description": "Chat with Gemini using the current page's content as context.",
   "icons": {

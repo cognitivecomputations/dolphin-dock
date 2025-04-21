@@ -6,8 +6,9 @@
     "test": "echo \"Error: no test specified\" && exit 1",
     "build:css": "tailwindcss-cli -i ./src/input.css -o ./sidepanel.css",
     "watch:css": "tailwindcss-cli -i ./src/input.css -o ./sidepanel.css --watch",
-    "build:js": "esbuild content.js --bundle --outfile=dist/content.bundle.js --format=iife",
-    "build": "npm run build:css && npm run build:js"
+    "build:content-js": "esbuild content.js --bundle --outfile=dist/content.bundle.js --format=iife",
+    "build:sidepanel-js": "esbuild sidepanel.js --bundle --outfile=dist/sidepanel.bundle.js --format=iife --external:chrome",
+    "build": "npm run build:css && npm run build:content-js && npm run build:sidepanel-js"
   },
   "keywords": [],
   "author": "",
@@ -21,6 +22,8 @@
     "tailwindcss": "^4.1.4"
   },
   "dependencies": {
-    "@mozilla/readability": "^0.6.0"
+    "@mozilla/readability": "^0.6.0",
+    "dompurify": "^3.2.5",
+    "marked": "^15.0.8"
   }
 }

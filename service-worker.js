@@ -230,7 +230,8 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
              console.log(`No ongoing generation found to stop for instance ${instanceId}`);
              sendResponse({ success: false, message: "No active generation to stop." });
         }
-        return true; // Async response possible
+        // Return false because sendResponse is called synchronously within this handler
+        return false;
     }
 
 
