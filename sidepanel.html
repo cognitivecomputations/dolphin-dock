@@ -1,0 +1,87 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dolphin 🐬 Copilot</title>
+    <link rel="stylesheet" href="sidepanel.css"> <!-- Tailwind output -->
+</head>
+<body class="bg-white text-gray-800 h-screen flex flex-col"> <!-- Force white bg, default text color -->
+
+    <div class="container mx-auto flex flex-col flex-grow h-full overflow-hidden"> <!-- Removed p-4 -->
+        <!-- Removed H1 title -->
+
+        <div class="api-key-section mb-2 px-4 pt-2"> <!-- Adjusted padding/margin -->
+            <button id="toggleApiKeyVisibility" class="w-full flex justify-between items-center p-2 text-sm font-medium text-left text-muted-foreground hover:text-foreground focus:outline-none"> <!-- Adjusted padding, colors -->
+                <span>Configuration</span>
+                <!-- Heroicon: chevron-down / chevron-up -->
+                <svg id="apiKeyToggleIndicator" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-4 h-4 transition-transform duration-200">
+                  <path stroke-linecap="round" stroke-linejoin="round" d="m19.5 8.25-7.5 7.5-7.5-7.5" />
+                </svg>
+            </button>
+            <div id="apiKeyDetails" class="p-3 border rounded-md mt-1 hidden"> <!-- Initially hidden, added border/rounding here -->
+                 <label for="apiKey" class="block text-sm font-medium mb-1">Gemini API Key:</label> <!-- Made label visible again -->
+                <div class="flex items-center space-x-2">
+                    <input type="password" id="apiKey" placeholder="Enter your API key" class="flex-grow p-2 border rounded-md bg-input text-sm focus:outline-none focus:ring-2 focus:ring-ring">
+                    <button id="saveApiKey" class="px-3 py-2 bg-primary text-primary-foreground rounded-md text-sm font-medium hover:bg-primary/90 focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2">Save</button>
+                </div>
+                <p id="apiKeyStatus" class="text-xs mt-1 text-muted-foreground"></p>
+            </div>
+        </div>
+
+        <!-- Chatbox with scroll - Cleaner look -->
+        <div id="chatbox" class="flex-grow p-4 overflow-y-auto space-y-4"> <!-- Removed bg-gray-50, mb-2 -->
+            <!-- Chat messages will appear here -->
+            <!-- Example message structure (JS will create these) -->
+            <!--
+            <div class="message user-message bg-primary text-primary-foreground p-2 rounded-lg max-w-[80%] self-end">Hello!</div>
+            <div class="message gemini-message bg-card border p-2 rounded-lg max-w-[80%] self-start relative group">
+                Hi there! How can I help?
+                <button class="copy-button absolute top-1 right-1 bg-secondary text-secondary-foreground text-xs px-1.5 py-0.5 rounded opacity-0 group-hover:opacity-100 transition-opacity">Copy</button>
+            </div>
+             -->
+        </div>
+
+        <!-- Input Area - ChatGPT style - Cleaner look -->
+        <div id="inputArea" class="mt-auto p-3 border-t border-gray-200"> <!-- Added border back, adjusted padding -->
+            <div class="relative flex items-center">
+                 <!-- Consider adding other buttons here later if needed -->
+                <textarea
+                    id="messageInput"
+                    placeholder="Ask about this page..."
+                    rows="1"
+                    class="flex-grow p-2.5 pr-12 border border-gray-300 rounded-xl bg-white text-sm focus:outline-none focus:ring-1 focus:ring-blue-500 focus:border-blue-500 resize-none overflow-y-auto max-h-32" /* Adjusted padding, border, rounding, focus */
+                    style="scrollbar-width: none; -ms-overflow-style: none;"
+                    oninput="this.style.height = 'auto'; this.style.height = (this.scrollHeight) + 'px';"
+                 ></textarea>
+                 <style>#messageInput::-webkit-scrollbar { display: none; }</style>
+
+                <button
+                    id="sendMessage"
+                    class="absolute right-2.5 top-1/2 transform -translate-y-1/2 p-1.5 bg-black text-white rounded-lg text-sm font-medium hover:bg-gray-800 focus:outline-none focus:ring-2 focus:ring-black focus:ring-offset-1 disabled:opacity-30 disabled:hover:bg-black" /* Adjusted colors, padding, rounding */
+                    aria-label="Send message"
+                >
+                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-4 h-4"> <!-- Adjusted size -->
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M6 12 3.269 3.125A59.769 59.769 0 0 1 21.485 12 59.768 59.768 0 0 1 3.27 20.875L5.999 12Zm0 0h7.5" />
+                    </svg>
+                </button>
+            </div>
+             <!-- Stop Button - Initially Hidden -->
+            <button id="stopGenerating" class="mt-2 w-full flex items-center justify-center px-4 py-1.5 border border-gray-300 rounded-md text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-1 focus:ring-gray-500 hidden">
+                 <!-- Heroicon: stop-circle -->
+                 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" class="w-4 h-4 mr-1.5">
+                    <path fill-rule="evenodd" d="M10 18a8 8 0 1 0 0-16 8 8 0 0 0 0 16ZM8 7a1 1 0 0 0-1 1v4a1 1 0 0 0 1 1h4a1 1 0 0 0 1-1V8a1 1 0 0 0-1-1H8Z" clip-rule="evenodd" />
+                 </svg>
+                Stop Generating
+            </button>
+        </div>
+
+
+        <!-- Loading and Error Indicators (Keep for initial API key check errors etc.) -->
+        <div id="loadingIndicator" class="text-sm text-muted-foreground text-center py-1" style="display: none;">Thinking...</div>
+        <p id="errorDisplay" class="error-message text-sm text-destructive text-center py-1"></p>
+    </div>
+
+    <script src="sidepanel.js"></script>
+</body>
+</html>

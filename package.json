@@ -1,0 +1,26 @@
+{
+  "name": "gemini-dom-chat-extension",
+  "version": "1.0.0",
+  "main": "content.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "build:css": "tailwindcss-cli -i ./src/input.css -o ./sidepanel.css",
+    "watch:css": "tailwindcss-cli -i ./src/input.css -o ./sidepanel.css --watch",
+    "build:js": "esbuild content.js --bundle --outfile=dist/content.bundle.js --format=iife",
+    "build": "npm run build:css && npm run build:js"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "type": "commonjs",
+  "description": "",
+  "devDependencies": {
+    "autoprefixer": "^10.4.21",
+    "esbuild": "^0.25.2",
+    "postcss": "^8.5.3",
+    "tailwindcss": "^4.1.4"
+  },
+  "dependencies": {
+    "@mozilla/readability": "^0.6.0"
+  }
+}
