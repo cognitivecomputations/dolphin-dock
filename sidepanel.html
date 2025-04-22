@@ -20,13 +20,74 @@
                   <path stroke-linecap="round" stroke-linejoin="round" d="m19.5 8.25-7.5 7.5-7.5-7.5" />
                 </svg>
             </button>
-            <div id="apiKeyDetails" class="p-3 border rounded-md mt-1 hidden"> <!-- Initially hidden, added border/rounding here -->
-                 <label for="apiKey" class="block text-sm font-medium mb-1">Gemini API Key:</label> <!-- Made label visible again -->
-                <div class="flex items-center space-x-2">
-                    <input type="password" id="apiKey" placeholder="Enter your API key" class="flex-grow p-2 border rounded-md bg-input text-sm focus:outline-none focus:ring-2 focus:ring-ring">
-                    <button id="saveApiKey" class="px-3 py-2 bg-primary text-primary-foreground rounded-md text-sm font-medium hover:bg-primary/90 focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2">Save</button>
+            <div id="apiKeyDetails" class="p-3 border rounded-md mt-1 hidden space-y-4"> <!-- Initially hidden, added border/rounding, added spacing -->
+
+                <!-- Provider Selection -->
+                <div>
+                    <label for="providerSelect" class="block text-sm font-medium mb-1">AI Provider:</label>
+                    <select id="providerSelect" class="w-full p-2 border rounded-md bg-input text-sm focus:outline-none focus:ring-2 focus:ring-ring">
+                        <option value="gemini" selected>Gemini</option>
+                        <option value="openai">OpenAI</option>
+                        <option value="anthropic">Anthropic</option>
+                        <option value="custom">Custom</option>
+                    </select>
                 </div>
-                <p id="apiKeyStatus" class="text-xs mt-1 text-muted-foreground"></p>
+
+                <!-- Gemini Settings (Visible by default) -->
+                <div id="geminiSettings" class="provider-settings space-y-2">
+                    <div>
+                        <label for="geminiModel" class="block text-sm font-medium mb-1">Gemini Model:</label>
+                        <input type="text" id="geminiModel" placeholder="e.g., gemini-1.5-pro-latest" class="w-full p-2 border rounded-md bg-input text-sm focus:outline-none focus:ring-2 focus:ring-ring">
+                    </div>
+                    <div>
+                        <label for="geminiApiKey" class="block text-sm font-medium mb-1">Gemini API Key:</label>
+                        <div class="flex items-center space-x-2">
+                            <input type="password" id="geminiApiKey" placeholder="Enter Gemini API key" class="flex-grow p-2 border rounded-md bg-input text-sm focus:outline-none focus:ring-2 focus:ring-ring">
+                            <button id="saveApiKey" class="px-3 py-2 bg-primary text-primary-foreground rounded-md text-sm font-medium hover:bg-primary/90 focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2">Save</button>
+                        </div>
+                        <p id="apiKeyStatus" class="text-xs mt-1 text-muted-foreground"></p> <!-- Status for save -->
+                    </div>
+                </div>
+
+                <!-- OpenAI Settings (Hidden by default) -->
+                <div id="openaiSettings" class="provider-settings space-y-2 hidden">
+                     <div>
+                        <label for="openaiModel" class="block text-sm font-medium mb-1">OpenAI Model:</label>
+                        <input type="text" id="openaiModel" placeholder="e.g., gpt-4-turbo" class="w-full p-2 border rounded-md bg-input text-sm focus:outline-none focus:ring-2 focus:ring-ring">
+                    </div>
+                   <div>
+                        <label for="openaiApiKey" class="block text-sm font-medium mb-1">OpenAI API Key:</label>
+                        <input type="password" id="openaiApiKey" placeholder="Enter OpenAI API key" class="w-full p-2 border rounded-md bg-input text-sm focus:outline-none focus:ring-2 focus:ring-ring">
+                        <!-- Add Save button/status if needed per-provider -->
+                    </div>
+                </div>
+
+                <!-- Anthropic Settings (Hidden by default) -->
+                <div id="anthropicSettings" class="provider-settings space-y-2 hidden">
+                     <div>
+                        <label for="anthropicModel" class="block text-sm font-medium mb-1">Anthropic Model:</label>
+                        <input type="text" id="anthropicModel" placeholder="e.g., claude-3-opus-20240229" class="w-full p-2 border rounded-md bg-input text-sm focus:outline-none focus:ring-2 focus:ring-ring">
+                    </div>
+                    <div>
+                        <label for="anthropicApiKey" class="block text-sm font-medium mb-1">Anthropic API Key:</label>
+                        <input type="password" id="anthropicApiKey" placeholder="Enter Anthropic API key" class="w-full p-2 border rounded-md bg-input text-sm focus:outline-none focus:ring-2 focus:ring-ring">
+                         <!-- Add Save button/status if needed per-provider -->
+                    </div>
+                </div>
+
+                 <!-- Custom Settings (Hidden by default) -->
+                <div id="customSettings" class="provider-settings space-y-2 hidden">
+                     <div>
+                        <label for="customModel" class="block text-sm font-medium mb-1">Custom Model Identifier:</label>
+                        <input type="text" id="customModel" placeholder="Model name or endpoint" class="w-full p-2 border rounded-md bg-input text-sm focus:outline-none focus:ring-2 focus:ring-ring">
+                    </div>
+                    <div>
+                        <label for="customApiKey" class="block text-sm font-medium mb-1">Custom API Key/Token:</label>
+                        <input type="password" id="customApiKey" placeholder="Enter Custom API key" class="w-full p-2 border rounded-md bg-input text-sm focus:outline-none focus:ring-2 focus:ring-ring">
+                         <!-- Add Save button/status if needed per-provider -->
+                    </div>
+                </div>
+
             </div>
         </div>
 

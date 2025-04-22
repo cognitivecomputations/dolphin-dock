@@ -7,7 +7,6 @@ This `.clinerules` file provides project-specific guidelines for Cline to ensure
 - This is a Google Chrome Extension project.
 - Adhere strictly to Chrome Extension architecture principles, using Manifest V3 unless specified otherwise.
 - Be mindful of different execution contexts (background, content script, popup) and their limitations.
-- Always ask for clarification if the target context for a piece of code is unclear.
 - Prioritize user experience in UI design for popups and options pages.
 
 ## Manifest File (`manifest.json`)

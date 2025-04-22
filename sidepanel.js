@@ -23,6 +23,17 @@ const stopGeneratingButton = document.getElementById('stopGenerating');
 const loadingIndicator = document.getElementById('loadingIndicator');
 const errorDisplay = document.getElementById('errorDisplay');
 
+// Provider Settings Elements
+const providerSelect = document.getElementById('providerSelect');
+const geminiSettings = document.getElementById('geminiSettings');
+const openaiSettings = document.getElementById('openaiSettings');
+const anthropicSettings = document.getElementById('anthropicSettings');
+const customSettings = document.getElementById('customSettings');
+const allProviderSettings = document.querySelectorAll('.provider-settings'); // Helper selector
+
+// Note: The original apiKeyInput now specifically refers to the Gemini key input
+const geminiApiKeyInput = document.getElementById('geminiApiKey'); // Renamed from apiKeyInput for clarity if needed elsewhere, though original variable name is kept for now.
+
 let isStreaming = false;
 let currentGeminiMessageDiv = null;
 let currentOutputText = '';
@@ -94,7 +105,39 @@ document.addEventListener('DOMContentLoaded', () => {
         // Set height based on scroll height
         messageInput.style.height = (messageInput.scrollHeight) + 'px';
     });
+
+    // Add listener for provider selection change
+    providerSelect.addEventListener('change', handleProviderChange);
+
+    // Initial setup based on default selection (Gemini)
+    handleProviderChange(); // Call once to set initial state
 });
+
+// --- Provider Settings Visibility ---
+function handleProviderChange() {
+    const selectedProvider = providerSelect.value;
+
+    // Hide all provider settings sections
+    allProviderSettings.forEach(div => div.classList.add('hidden'));
+
+    // Show the selected one
+    switch (selectedProvider) {
+        case 'gemini':
+            geminiSettings.classList.remove('hidden');
+            break;
+        case 'openai':
+            openaiSettings.classList.remove('hidden');
+            break;
+        case 'anthropic':
+            anthropicSettings.classList.remove('hidden');
+            break;
+        case 'custom':
+            customSettings.classList.remove('hidden');
+            break;
+    }
+    // Note: The save button logic currently only targets the Gemini key.
+    // Further logic would be needed to save settings for the selected provider.
+}
 
 // Function to add messages to the chatbox (using unified)
 async function addMessage(text, sender, isComplete = true) {
