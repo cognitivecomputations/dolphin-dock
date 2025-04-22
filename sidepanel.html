@@ -5,6 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Dolphin 🐬 Dock</title>
     <link rel="stylesheet" href="sidepanel.css"> <!-- Tailwind output -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.css"> <!-- KaTeX CSS (Removed integrity/crossorigin) -->
 </head>
 <body class="bg-white text-gray-800 h-screen flex flex-col"> <!-- Force white bg, default text color -->
 
@@ -52,7 +53,6 @@
                     rows="1"
                     class="flex-grow p-2.5 pr-12 border border-gray-300 rounded-xl bg-white text-sm focus:outline-none focus:ring-1 focus:ring-blue-500 focus:border-blue-500 resize-none overflow-y-auto max-h-32" /* Adjusted padding, border, rounding, focus */
                     style="scrollbar-width: none; -ms-overflow-style: none;"
-                    oninput="this.style.height = 'auto'; this.style.height = (this.scrollHeight) + 'px';"
                  ></textarea>
                  <style>#messageInput::-webkit-scrollbar { display: none; }</style>
 

@@ -1,0 +1,80 @@
+# Chrome Extension Project Guidelines (.clinerules)
+
+This `.clinerules` file provides project-specific guidelines for Cline to ensure consistent and secure development practices across the team. It covers key aspects of Chrome Extension development, including manifest configuration, scripting, security, testing, and documentation.
+
+## Project Overview & Core Concepts
+
+- This is a Google Chrome Extension project.
+- Adhere strictly to Chrome Extension architecture principles, using Manifest V3 unless specified otherwise.
+- Be mindful of different execution contexts (background, content script, popup) and their limitations.
+- Always ask for clarification if the target context for a piece of code is unclear.
+- Prioritize user experience in UI design for popups and options pages.
+
+## Manifest File (`manifest.json`)
+
+- The `manifest.json` file is CRITICAL. Ensure it is always valid and correctly configured.
+- Use Manifest V3 unless explicitly told otherwise.
+- Declare only the minimum required permissions under `permissions` and `host_permissions`.
+- Clearly document the need for each permission in the extension's documentation.
+
+## Scripting Environment & APIs
+
+- Use `chrome.*` APIs appropriately in different contexts.
+- Background scripts (service workers in V3) are event-driven and have no DOM access.
+- Content scripts can access and manipulate the web page DOM.
+- Popups and options pages are standard HTML/JS and can access their own DOM.
+- Optimize background scripts to minimize resource usage (CPU, memory).
+- Use `chrome.runtime.sendMessage` for communication between contexts.
+
+## Dependencies & Bundling
+
+- All external dependencies must be bundled using tools like Webpack or Rollup.
+- Ensure the manifest points to bundled files, not source files.
+- Assume a build process is in place; ask if unsure.
+
+## Debugging & Logging
+
+- NO `console.log`, `console.warn`, `console.error`, `alert()`, or `debugger` statements.
+- Use proper error handling with `try...catch` and `chrome.runtime.lastError`.
+- For debugging, use the appropriate DevTools for each context.
+- Conditional logging for development: wrap logs in a development flag.
+
+## Code Style & Comments
+
+- Write self-explanatory code with minimal comments.
+- NO HTML comments in HTML files.
+- Use clear variable and function names.
+- Follow consistent code style:
+  - Use camelCase for variables and functions.
+  - Prefer async/await over callbacks.
+  - Use `const` and `let` instead of `var`.
+  - Follow the [Google JavaScript Style Guide](https://google.github.io/styleguide/jsguide.html).
+
+## Security Considerations
+
+- **Content Security Policy (CSP)**: Adhere to Manifest V3's restrictive CSP. No inline scripts or `eval()`.
+- **Permissions**: Request only necessary permissions. Document their usage.
+- **Data Storage**: Use `chrome.storage.sync` or `chrome.storage.local`. Avoid `localStorage`.
+- **External Requests**: Validate origins and data for external requests.
+- **Sensitive Files**: Ignore the following files and do not include them in any analysis or modifications:
+  - `.env` files
+  - Files matching `*_key`
+  - Files matching `*.pem`
+  - Any files containing API keys, tokens, or credentials
+- **Input Validation**: Validate and sanitize all user inputs, especially in content scripts.
+
+## Testing
+
+- **Unit Tests**: Write tests for pure logic functions using Jest.
+- **Integration Tests**: Test API endpoints and component interactions.
+- **End-to-End Tests**: Use Puppeteer to simulate user interactions across browser versions.
+- Consider beta testing channels for pre-release validation.
+
+## Documentation
+
+- Update `README.md` with setup, build, and usage instructions.
+- Maintain API documentation in `/docs/api` using JSDoc.
+- Log Architectural Decision Records (ADRs) in `/docs/adr` using `template.md`.
+- Ensure the Chrome Web Store listing is accurate and updated with each release.
+
+**Cline Self-Correction Reminder**: Before providing code or making changes, review these rules. If any instruction conflicts with a specific request, ask for clarification.

@@ -1,6 +1,14 @@
 // sidepanel.js
-import { marked } from 'marked';
-import DOMPurify from 'dompurify';
+import { unified } from 'unified';
+import remarkParse from 'remark-parse';
+import remarkGfm from 'remark-gfm'; // GitHub Flavored Markdown (tables, strikethrough, etc.)
+import remarkMath from 'remark-math'; // Support math syntax like $...$ and $$...$$
+import remarkRehype from 'remark-rehype'; // Convert Markdown AST to HTML AST
+import rehypeKatex from 'rehype-katex'; // Render math using KaTeX
+import rehypeSanitize, { defaultSchema } from 'rehype-sanitize'; // Sanitize HTML
+import rehypeStringify from 'rehype-stringify'; // Convert HTML AST to string
+
+// KaTeX CSS is loaded via CDN in sidepanel.html
 
 const apiKeyInput = document.getElementById('apiKey');
 const saveApiKeyButton = document.getElementById('saveApiKey');
@@ -21,6 +29,27 @@ let currentOutputText = '';
 const sidePanelInstanceId = crypto.randomUUID();
 console.log("Side Panel Instance ID:", sidePanelInstanceId);
 
+// Configure the unified processor
+const processor = unified()
+    .use(remarkParse) // Parse Markdown text -> mdast
+    .use(remarkGfm) // Support GFM features
+    .use(remarkMath) // Support math syntax
+    .use(remarkRehype) // mdast -> hast (HTML AST)
+    .use(rehypeKatex) // Render math in hast using KaTeX
+    .use(rehypeSanitize, { // Sanitize the resulting HTML
+        ...defaultSchema, // Start with the default safe schema
+        // Allow classes needed by KaTeX
+        clobberPrefix: '', // Don't prefix IDs/names
+        attributes: {
+            ...defaultSchema.attributes,
+            // Allow KaTeX classes on spans, divs, etc.
+            span: [...(defaultSchema.attributes?.span || []), ['className', /^katex/]],
+            div: [...(defaultSchema.attributes?.div || []), ['className', 'math']], // Allow math display divs
+            '*': [...(defaultSchema.attributes?.['*'] || []), 'aria-hidden'], // Allow aria-hidden used by KaTeX
+        },
+    })
+    .use(rehypeStringify); // hast -> HTML string
+
 // --- Initialization ---
 
 function toggleApiKeySection(show) {
@@ -34,7 +63,7 @@ function toggleApiKeySection(show) {
 }
 
 document.addEventListener('DOMContentLoaded', () => {
-    messageInput.disabled = false; // Enable by default
+    messageInput.disabled = false;
     sendMessageButton.disabled = false;
     messageInput.focus();
 
@@ -57,34 +86,50 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     });
     updateStreamingUI(false);
+
+    // Add input listener for textarea auto-resize (CSP-compliant)
+    messageInput.addEventListener('input', () => {
+        // Reset height to shrink if text is deleted
+        messageInput.style.height = 'auto';
+        // Set height based on scroll height
+        messageInput.style.height = (messageInput.scrollHeight) + 'px';
+    });
 });
 
-// Function to add messages to the chatbox (modified for streaming and Markdown)
-function addMessage(text, sender, isComplete = true) {
+// Function to add messages to the chatbox (using unified)
+async function addMessage(text, sender, isComplete = true) {
     const isGemini = sender === 'gemini';
+    let contentHtml = ''; // To store processed HTML
+
+    if (isGemini) {
+        // Process Gemini text (cumulative or complete)
+        currentOutputText = (!isComplete && currentGeminiMessageDiv) ? currentOutputText + text : text;
+        try {
+            const file = await processor.process(currentOutputText);
+            contentHtml = String(file);
+        } catch (error) {
+            console.error("Markdown processing error:", error);
+            contentHtml = `<p>Error rendering content.</p><pre><code>${currentOutputText.replace(/</g, "<").replace(/>/g, ">")}</code></pre>`; // Fallback
+        }
+    } else {
+        // User message is plain text, escape it for safety if needed, but usually fine for textContent
+        contentHtml = text; // Keep user text as is for now
+    }
+
 
     if (isGemini && !isComplete && currentGeminiMessageDiv) {
-        // Append chunk to existing message div
-        currentOutputText += text;
-        // Parse and sanitize the cumulative text
-        const dirtyHtml = marked.parse(currentOutputText);
-        const cleanHtml = DOMPurify.sanitize(dirtyHtml);
-        currentGeminiMessageDiv.querySelector('.message-content').innerHTML = cleanHtml;
-
+        // Update existing message div
+        currentGeminiMessageDiv.querySelector('.message-content').innerHTML = contentHtml;
     } else {
         // Create new message div
         const messageDiv = document.createElement('div');
         const contentSpan = document.createElement('span');
-        contentSpan.classList.add('message-content', 'prose', 'prose-sm', 'max-w-none'); // Add prose for markdown styling
+        contentSpan.classList.add('message-content'); // Base class
 
         if (isGemini) {
-            // Parse and sanitize initial/complete text
-            currentOutputText = text; // Store initial/complete text
-            const dirtyHtml = marked.parse(currentOutputText);
-            const cleanHtml = DOMPurify.sanitize(dirtyHtml);
-            contentSpan.innerHTML = cleanHtml;
+            contentSpan.innerHTML = contentHtml;
         } else {
-            contentSpan.textContent = text; // User message is plain text
+            contentSpan.textContent = contentHtml; // Set user text
         }
 
         if (sender === 'user') {
@@ -95,11 +140,10 @@ function addMessage(text, sender, isComplete = true) {
             messageDiv.appendChild(contentSpan);
 
             if (isComplete) {
-                addCopyButton(messageDiv, text); // Still copy the raw text
+                addCopyButton(messageDiv, text); // Copy the original markdown text
                 currentGeminiMessageDiv = null;
                 currentOutputText = '';
             } else {
-                // This is the start of a streaming message
                 currentGeminiMessageDiv = messageDiv;
                 // Don't add copy button yet
             }
@@ -123,7 +167,7 @@ function addCopyButton(messageDiv, textToCopy) {
         'transition-opacity', 'focus:outline-none', 'focus:ring-1', 'focus:ring-ring'
     );
     copyButton.onclick = () => {
-        navigator.clipboard.writeText(textToCopy) // Copy raw text
+        navigator.clipboard.writeText(textToCopy) // Copy raw markdown text
             .then(() => {
                 copyButton.textContent = 'Copied!';
                 setTimeout(() => { copyButton.textContent = 'Copy'; }, 2000);
@@ -167,12 +211,13 @@ function updateStreamingUI(streaming) {
     }
 }
 
-function handleSendMessage() {
+// Make handleSendMessage async because addMessage is now async
+async function handleSendMessage() {
     const messageText = messageInput.value.trim();
     if (!messageText || isStreaming) return;
 
     clearError();
-    addMessage(messageText, 'user');
+    await addMessage(messageText, 'user'); // Await user message addition (though it's sync)
     messageInput.value = '';
     messageInput.style.height = 'auto';
     updateStreamingUI(true);
@@ -228,12 +273,13 @@ saveApiKeyButton.addEventListener('click', () => {
     });
 });
 
-sendMessageButton.addEventListener('click', handleSendMessage);
+// Make event listeners call the async version
+sendMessageButton.addEventListener('click', () => { handleSendMessage().catch(console.error); });
 
 messageInput.addEventListener('keydown', (event) => {
     if (event.key === 'Enter' && !event.shiftKey) {
         event.preventDefault();
-        handleSendMessage();
+        handleSendMessage().catch(console.error);
     }
 });
 
@@ -264,60 +310,63 @@ stopGeneratingButton.addEventListener('click', () => {
     });
 });
 
+// Make message listener async
 chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
     if (request.instanceId && request.instanceId !== sidePanelInstanceId) {
         return;
     }
     console.log("Sidepanel received message for this instance:", request.action);
 
-    switch (request.action) {
-        case "streamStart":
-            addMessage("", 'gemini', false);
-            clearError();
-            updateStreamingUI(true);
-            break;
-        case "streamChunk":
-            if (currentGeminiMessageDiv) {
-                addMessage(request.chunk, 'gemini', false);
-            } else {
-                console.warn("Received stream chunk but no active message div.");
-                addMessage(request.chunk, 'gemini', true);
-            }
-            break;
-        case "streamEnd":
-            console.log("Stream ended.");
-            updateStreamingUI(false);
-            break;
-        case "streamError":
-            console.error("Streaming Error:", request.error);
-            displayError(`Error: ${request.error}`);
-            updateStreamingUI(false);
-             if (!currentGeminiMessageDiv) {
-                 addMessage(`[Error: ${request.error}]`, 'gemini', true);
-             } else {
-                  currentOutputText += `\n[Error: ${request.error}]`;
-                  // Render final error state with markdown
-                  const dirtyHtml = marked.parse(currentOutputText);
-                  const cleanHtml = DOMPurify.sanitize(dirtyHtml);
-                  currentGeminiMessageDiv.querySelector('.message-content').innerHTML = cleanHtml;
-                  addCopyButton(currentGeminiMessageDiv, currentOutputText); // Copy raw text
-                  currentGeminiMessageDiv = null;
-                  currentOutputText = '';
-             }
-            break;
-         case "streamAbort":
-            console.log("Stream aborted by user.");
-             if (currentGeminiMessageDiv) {
-                 currentOutputText += "\n[Generation stopped by user]";
-                 // Render final aborted state with markdown
-                 const dirtyHtml = marked.parse(currentOutputText);
-                 const cleanHtml = DOMPurify.sanitize(dirtyHtml);
-                 currentGeminiMessageDiv.querySelector('.message-content').innerHTML = cleanHtml;
-                 addCopyButton(currentGeminiMessageDiv, currentOutputText); // Copy raw text
-             } else {
-                 addMessage("[Generation stopped by user]", 'gemini', true);
-             }
-            updateStreamingUI(false);
-            break;
-    }
+    // Use an async IIFE to handle potential async operations within the switch
+    (async () => {
+        switch (request.action) {
+            case "streamStart":
+                await addMessage("", 'gemini', false); // Await message addition
+                clearError();
+                updateStreamingUI(true);
+                break;
+            case "streamChunk":
+                if (currentGeminiMessageDiv) {
+                    await addMessage(request.chunk, 'gemini', false); // Await message update
+                } else {
+                    console.warn("Received stream chunk but no active message div.");
+                    await addMessage(request.chunk, 'gemini', true); // Await message addition
+                }
+                break;
+            case "streamEnd":
+                console.log("Stream ended.");
+                updateStreamingUI(false);
+                break;
+            case "streamError":
+                console.error("Streaming Error:", request.error);
+                displayError(`Error: ${request.error}`);
+                 if (!currentGeminiMessageDiv) {
+                     await addMessage(`[Error: ${request.error}]`, 'gemini', true);
+                 } else {
+                      currentOutputText += `\n[Error: ${request.error}]`;
+                      const renderedHtml = await processor.process(currentOutputText); // Use await here
+                      currentGeminiMessageDiv.querySelector('.message-content').innerHTML = String(renderedHtml);
+                      addCopyButton(currentGeminiMessageDiv, currentOutputText);
+                      currentGeminiMessageDiv = null;
+                      currentOutputText = '';
+                 }
+                updateStreamingUI(false); // Reset UI after handling error message
+                break;
+             case "streamAbort":
+                console.log("Stream aborted by user.");
+                 if (currentGeminiMessageDiv) {
+                     currentOutputText += "\n[Generation stopped by user]";
+                     const renderedHtml = await processor.process(currentOutputText); // Use await here
+                     currentGeminiMessageDiv.querySelector('.message-content').innerHTML = String(renderedHtml);
+                     addCopyButton(currentGeminiMessageDiv, currentOutputText);
+                 } else {
+                     await addMessage("[Generation stopped by user]", 'gemini', true);
+                 }
+                updateStreamingUI(false);
+                break;
+        }
+    })().catch(console.error); // Catch any errors from the async IIFE
+
+    // Return false as we are not using sendResponse asynchronously here
+    return false;
 });
