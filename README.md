@@ -19,8 +19,8 @@ Dolphin Dock is a Google Chrome Extension designed to provide contextual assista
 
 1.  **Clone the repository:**
     ```bash
-    git clone <repository-url> # Replace with the actual URL if available
-    cd gemini-dom-chat-extension # Or your project directory name
+    git clone https://github.com/cognitivecomputations/dolphin-dock.git 
+    cd dolphin-dock
     ```
 2.  **Install dependencies:**
     ```bash
@@ -52,7 +52,7 @@ The necessary files for the extension (`manifest.json`, HTML, CSS, bundled JS, i
 2.  Navigate to `chrome://extensions/`.
 3.  Enable **"Developer mode"** using the toggle switch in the top-right corner.
 4.  Click the **"Load unpacked"** button that appears.
-5.  In the file selection dialog, navigate to the root directory of this project (`/Users/eric/gemini-dom-chat-extension`) and select it.
+5.  In the file selection dialog, navigate to the root directory of this project and select it.
 6.  The Dolphin Dock extension should now appear in your list of extensions and be active. You can access it via the side panel button in your Chrome toolbar (you might need to pin it first).
 
 **Note:** After making code changes, you'll need to run the appropriate build command (`npm run build` or `npm run build:dev`) again and then reload the extension in `chrome://extensions/` (using the reload icon on the extension's card) to see the updates.
