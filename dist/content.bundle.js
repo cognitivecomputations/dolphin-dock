@@ -2088,28 +2088,22 @@
   var require_content = __commonJS({
     "content.js"() {
       var import_readability = __toESM(require_readability());
-      console.log("Dolphin Copilot content script loaded.");
       chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
         if (request.action === "getDOM") {
-          console.log("Content script received request for DOM content via Readability.");
           const documentClone = document.cloneNode(true);
           const reader = new import_readability.Readability(documentClone);
           const article = reader.parse();
           let content = "";
           if (article && article.textContent) {
-            console.log(`Readability extracted content length: ${article.textContent.length}`);
             content = article.textContent;
           } else {
-            console.warn("Readability could not parse article content. Falling back to body text.");
             content = document.body.innerText || document.documentElement.textContent || "";
           }
-          const maxSize = 5e4;
+          const maxSize = 5e5;
           if (content.length > maxSize) {
-            console.log(`Truncating content from ${content.length} to ${maxSize} characters.`);
             content = content.substring(0, maxSize);
           }
           sendResponse({ domContent: content });
-          return true;
         }
       });
     }

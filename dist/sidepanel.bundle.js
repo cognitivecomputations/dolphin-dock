@@ -31197,6 +31197,13 @@
       var stopGeneratingButton = document.getElementById("stopGenerating");
       var loadingIndicator = document.getElementById("loadingIndicator");
       var errorDisplay = document.getElementById("errorDisplay");
+      var providerSelect = document.getElementById("providerSelect");
+      var geminiSettings = document.getElementById("geminiSettings");
+      var openaiSettings = document.getElementById("openaiSettings");
+      var anthropicSettings = document.getElementById("anthropicSettings");
+      var customSettings = document.getElementById("customSettings");
+      var allProviderSettings = document.querySelectorAll(".provider-settings");
+      var geminiApiKeyInput = document.getElementById("geminiApiKey");
       var isStreaming = false;
       var currentGeminiMessageDiv = null;
       var currentOutputText = "";
@@ -31255,7 +31262,27 @@
           messageInput.style.height = "auto";
           messageInput.style.height = messageInput.scrollHeight + "px";
         });
+        providerSelect.addEventListener("change", handleProviderChange);
+        handleProviderChange();
       });
+      function handleProviderChange() {
+        const selectedProvider = providerSelect.value;
+        allProviderSettings.forEach((div) => div.classList.add("hidden"));
+        switch (selectedProvider) {
+          case "gemini":
+            geminiSettings.classList.remove("hidden");
+            break;
+          case "openai":
+            openaiSettings.classList.remove("hidden");
+            break;
+          case "anthropic":
+            anthropicSettings.classList.remove("hidden");
+            break;
+          case "custom":
+            customSettings.classList.remove("hidden");
+            break;
+        }
+      }
       async function addMessage(text10, sender, isComplete = true) {
         const isGemini = sender === "gemini";
         let contentHtml = "";
