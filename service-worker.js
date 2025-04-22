@@ -254,6 +254,7 @@ ${userMessage}`;
             }
         })();
 
-        return true;
+        // No return true needed here, communication handled by sendMessageToSidePanel
     }
+    // Return false or undefined implicitly if no other handler returns true
 });
