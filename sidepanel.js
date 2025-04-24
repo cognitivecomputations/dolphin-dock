@@ -38,7 +38,7 @@ let isStreaming = false;
 let currentGeminiMessageDiv = null;
 let currentOutputText = '';
 const sidePanelInstanceId = crypto.randomUUID();
-console.log("Side Panel Instance ID:", sidePanelInstanceId);
+// console.log("Side Panel Instance ID:", sidePanelInstanceId); // Removed log
 
 // Configure the unified processor
 const processor = unified()
@@ -235,22 +235,17 @@ function clearError() {
 }
 
 function updateStreamingUI(streaming) {
-    isStreaming = streaming;
+    isStreaming = streaming; // Keep track of the streaming state
     if (streaming) {
         sendMessageButton.classList.add('hidden');
         stopGeneratingButton.classList.remove('hidden');
         messageInput.disabled = true;
     } else {
+        // Only manage UI elements state here, not message content or state vars
         sendMessageButton.classList.remove('hidden');
         stopGeneratingButton.classList.add('hidden');
         messageInput.disabled = false;
         messageInput.focus();
-
-        if (currentGeminiMessageDiv && currentOutputText) {
-             addCopyButton(currentGeminiMessageDiv, currentOutputText); // Pass raw text
-        }
-        currentGeminiMessageDiv = null;
-        currentOutputText = '';
     }
 }
 
@@ -270,19 +265,13 @@ async function handleSendMessage() {
             action: "processChat",
             message: messageText,
             instanceId: sidePanelInstanceId
-        },
-        (response) => {
-            if (chrome.runtime.lastError) {
-                 console.error("Error sending 'processChat' message:", chrome.runtime.lastError);
-                 displayError(`Extension communication error: ${chrome.runtime.lastError.message}`);
-                 updateStreamingUI(false);
-            } else if (response && !response.success && response.error) {
-                 console.error("Immediate error response from service worker:", response.error);
-                 displayError(response.error);
-                 updateStreamingUI(false);
-            }
         }
+        // No callback needed here, communication is handled by stream messages
+        // If an immediate error occurs sending the message (e.g., service worker inactive),
+        // it might throw an error that could be caught, but typically we rely on streamError.
     );
+    // Consider adding a try/catch around the sendMessage if needed,
+    // but the primary communication channel is the listener below.
 }
 
 // --- Event Listeners ---
@@ -328,7 +317,7 @@ messageInput.addEventListener('keydown', (event) => {
 
 stopGeneratingButton.addEventListener('click', () => {
     if (!isStreaming) return;
-    console.log("Stop Generating button clicked.");
+    // console.log("Stop Generating button clicked."); // Removed log
     stopGeneratingButton.disabled = true;
     stopGeneratingButton.textContent = 'Stopping...';
 
@@ -346,9 +335,10 @@ stopGeneratingButton.addEventListener('click', () => {
              console.error("Error sending 'stopGeneration' message:", chrome.runtime.lastError);
              displayError(`Error stopping generation: ${chrome.runtime.lastError.message}`);
          } else if (response && !response.success) {
-             console.warn("Stop generation request failed:", response.message);
+             // console.warn("Stop generation request failed:", response.message); // Keep warn? Maybe displayError? For now remove.
+             displayError(`Stop request failed: ${response.message || 'Unknown reason'}`); // Display error instead
          } else {
-             console.log("Stop request acknowledged by service worker.");
+             // console.log("Stop request acknowledged by service worker."); // Removed log
          }
     });
 });
@@ -356,9 +346,9 @@ stopGeneratingButton.addEventListener('click', () => {
 // Make message listener async
 chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
     if (request.instanceId && request.instanceId !== sidePanelInstanceId) {
-        return;
+        return; // Ignore messages not for this instance
     }
-    console.log("Sidepanel received message for this instance:", request.action);
+    // console.log("Sidepanel received message for this instance:", request.action); // Removed log
 
     // Use an async IIFE to handle potential async operations within the switch
     (async () => {
@@ -372,12 +362,20 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
                 if (currentGeminiMessageDiv) {
                     await addMessage(request.chunk, 'gemini', false); // Await message update
                 } else {
-                    console.warn("Received stream chunk but no active message div.");
-                    await addMessage(request.chunk, 'gemini', true); // Await message addition
+                    // console.warn("Received stream chunk but no active message div."); // Removed log
+                    // If we get a chunk but have no div, maybe start a new one?
+                    await addMessage(request.chunk, 'gemini', false); // Treat as start of stream if no div exists
                 }
                 break;
             case "streamEnd":
-                console.log("Stream ended.");
+                // Finalize the message content state
+                if (currentGeminiMessageDiv && currentOutputText) {
+                    addCopyButton(currentGeminiMessageDiv, currentOutputText); // Add copy button with final text
+                }
+                // Reset message state variables
+                currentGeminiMessageDiv = null;
+                currentOutputText = '';
+                // Reset UI elements state (buttons, input)
                 updateStreamingUI(false);
                 break;
             case "streamError":
@@ -393,10 +391,10 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
                       currentGeminiMessageDiv = null;
                       currentOutputText = '';
                  }
-                updateStreamingUI(false); // Reset UI after handling error message
+                 updateStreamingUI(false); // Reset UI after handling error message
                 break;
              case "streamAbort":
-                console.log("Stream aborted by user.");
+                // console.log("Stream aborted by user."); // Removed log
                  if (currentGeminiMessageDiv) {
                      currentOutputText += "\n[Generation stopped by user]";
                      const renderedHtml = await processor.process(currentOutputText); // Use await here

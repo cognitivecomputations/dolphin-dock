@@ -37,7 +37,13 @@
                 <div id="geminiSettings" class="provider-settings space-y-2">
                     <div>
                         <label for="geminiModel" class="block text-sm font-medium mb-1">Gemini Model:</label>
-                        <input type="text" id="geminiModel" placeholder="e.g., gemini-1.5-pro-latest" class="w-full p-2 border rounded-md bg-input text-sm focus:outline-none focus:ring-2 focus:ring-ring">
+                        <select id="geminiModel" class="w-full p-2 border rounded-md bg-input text-sm focus:outline-none focus:ring-2 focus:ring-ring">
+                            <option value="gemini-2.5-pro-preview-03-25">gemini-2.5-pro-preview-03-25</option>
+                            <option value="gemini-2.5-flash-preview-04-17" selected>gemini-2.5-flash-preview-04-17</option>
+                            <option value="gemini-2.0-flash-exp">gemini-2.0-flash-exp</option>
+                            <option value="gemini-2.0-flash">gemini-2.0-flash</option>
+                            <option value="gemini-2.0-flash-lite">gemini-2.0-flash-lite</option>
+                        </select>
                     </div>
                     <div>
                         <label for="geminiApiKey" class="block text-sm font-medium mb-1">Gemini API Key:</label>
@@ -78,8 +84,12 @@
                  <!-- Custom Settings (Hidden by default) -->
                 <div id="customSettings" class="provider-settings space-y-2 hidden">
                      <div>
+                        <label for="customModelEndpoint" class="block text-sm font-medium mb-1">Custom Model Endpoint:</label>
+                        <input type="text" id="customModelEndpoint" placeholder="e.g., https://api.example.com/v1/chat" class="w-full p-2 border rounded-md bg-input text-sm focus:outline-none focus:ring-2 focus:ring-ring">
+                    </div>
+                     <div>
                         <label for="customModel" class="block text-sm font-medium mb-1">Custom Model Identifier:</label>
-                        <input type="text" id="customModel" placeholder="Model name or endpoint" class="w-full p-2 border rounded-md bg-input text-sm focus:outline-none focus:ring-2 focus:ring-ring">
+                        <input type="text" id="customModel" placeholder="Optional: Model name if required by endpoint" class="w-full p-2 border rounded-md bg-input text-sm focus:outline-none focus:ring-2 focus:ring-ring">
                     </div>
                     <div>
                         <label for="customApiKey" class="block text-sm font-medium mb-1">Custom API Key/Token:</label>

@@ -31208,7 +31208,6 @@
       var currentGeminiMessageDiv = null;
       var currentOutputText = "";
       var sidePanelInstanceId = crypto.randomUUID();
-      console.log("Side Panel Instance ID:", sidePanelInstanceId);
       var processor = unified().use(remarkParse).use(remarkGfm).use(remarkMath).use(remarkRehype).use(rehypeKatex).use(rehypeSanitize, {
         // Sanitize the resulting HTML
         ...defaultSchema,
@@ -31384,11 +31383,6 @@
           stopGeneratingButton.classList.add("hidden");
           messageInput.disabled = false;
           messageInput.focus();
-          if (currentGeminiMessageDiv && currentOutputText) {
-            addCopyButton(currentGeminiMessageDiv, currentOutputText);
-          }
-          currentGeminiMessageDiv = null;
-          currentOutputText = "";
         }
       }
       async function handleSendMessage() {
@@ -31404,18 +31398,10 @@
             action: "processChat",
             message: messageText,
             instanceId: sidePanelInstanceId
-          },
-          (response) => {
-            if (chrome.runtime.lastError) {
-              console.error("Error sending 'processChat' message:", chrome.runtime.lastError);
-              displayError(`Extension communication error: ${chrome.runtime.lastError.message}`);
-              updateStreamingUI(false);
-            } else if (response && !response.success && response.error) {
-              console.error("Immediate error response from service worker:", response.error);
-              displayError(response.error);
-              updateStreamingUI(false);
-            }
           }
+          // No callback needed here, communication is handled by stream messages
+          // If an immediate error occurs sending the message (e.g., service worker inactive),
+          // it might throw an error that could be caught, but typically we rely on streamError.
         );
       }
       toggleApiKeyVisibilityButton.addEventListener("click", () => {
@@ -31456,7 +31442,6 @@
       });
       stopGeneratingButton.addEventListener("click", () => {
         if (!isStreaming) return;
-        console.log("Stop Generating button clicked.");
         stopGeneratingButton.disabled = true;
         stopGeneratingButton.textContent = "Stopping...";
         chrome.runtime.sendMessage(
@@ -31472,9 +31457,8 @@
               console.error("Error sending 'stopGeneration' message:", chrome.runtime.lastError);
               displayError(`Error stopping generation: ${chrome.runtime.lastError.message}`);
             } else if (response && !response.success) {
-              console.warn("Stop generation request failed:", response.message);
+              displayError(`Stop request failed: ${response.message || "Unknown reason"}`);
             } else {
-              console.log("Stop request acknowledged by service worker.");
             }
           }
         );
@@ -31483,7 +31467,6 @@
         if (request.instanceId && request.instanceId !== sidePanelInstanceId) {
           return;
         }
-        console.log("Sidepanel received message for this instance:", request.action);
         (async () => {
           switch (request.action) {
             case "streamStart":
@@ -31495,12 +31478,15 @@
               if (currentGeminiMessageDiv) {
                 await addMessage(request.chunk, "gemini", false);
               } else {
-                console.warn("Received stream chunk but no active message div.");
-                await addMessage(request.chunk, "gemini", true);
+                await addMessage(request.chunk, "gemini", false);
               }
               break;
             case "streamEnd":
-              console.log("Stream ended.");
+              if (currentGeminiMessageDiv && currentOutputText) {
+                addCopyButton(currentGeminiMessageDiv, currentOutputText);
+              }
+              currentGeminiMessageDiv = null;
+              currentOutputText = "";
               updateStreamingUI(false);
               break;
             case "streamError":
@@ -31520,7 +31506,6 @@
               updateStreamingUI(false);
               break;
             case "streamAbort":
-              console.log("Stream aborted by user.");
               if (currentGeminiMessageDiv) {
                 currentOutputText += "\n[Generation stopped by user]";
                 const renderedHtml = await processor.process(currentOutputText);
